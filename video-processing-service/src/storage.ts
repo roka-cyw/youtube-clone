@@ -4,8 +4,8 @@ import ffmpeg from 'fluent-ffmpeg'
 
 const storage = new Storage()
 
-const rawVidsBucketName = 'raw-vids'
-const processedVidsBucketName = 'pr-vids'
+const rawVidsBucketName = 'raw-vids-bucket'
+const processedVidsBucketName = 'pr-vids-bucket'
 
 const localRawVidsPath = './raw-vids'
 const localProcessedVidsPath = './p-vids'
