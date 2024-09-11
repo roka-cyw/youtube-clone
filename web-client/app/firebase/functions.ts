@@ -1,8 +1,17 @@
-import { getFunctions, httpsCallable } from 'firebase/functions'
-
-const functions = getFunctions()
+import { httpsCallable } from 'firebase/functions'
+import { functions } from './firebase'
 
 const generateUploadUrlFunction = httpsCallable(functions, 'generateUploadUrl')
+const getVideosFunction = httpsCallable(functions, 'getVideos')
+
+export interface Video {
+  id?: string
+  uid?: string
+  filename?: string
+  status?: 'processing' | 'completed'
+  title?: string
+  description?: string
+}
 
 export async function uploadVideo(file: File) {
   const response: any = await generateUploadUrlFunction({
@@ -15,8 +24,14 @@ export async function uploadVideo(file: File) {
     body: file,
     headers: {
       'Content-Type': file.type
-    }
+    },
+    cache: 'no-cache'
   })
 
   return uploadResult
+}
+
+export async function getVideos() {
+  const response = await getVideosFunction()
+  return response.data as Video[]
 }
