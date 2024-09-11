@@ -6,7 +6,7 @@ initializeApp({ credential: credential.applicationDefault() })
 
 const firestore: Firestore = getFirestore('cln-yt-firestore')
 
-const videoCollectionId = 'video'
+const videoCollectionId = 'videos'
 
 export interface Video {
   id?: string
@@ -28,5 +28,5 @@ export function setVideo(videoId: string, video: Video) {
 
 export async function isVideoNew(videoId: string) {
   const video = await getVideo(videoId)
-  return video?.status === undefined
+  return video?.status !== undefined
 }
