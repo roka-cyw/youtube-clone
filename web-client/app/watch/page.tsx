@@ -1,17 +1,10 @@
-'use client'
-
-import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
+import VideoPlayer from './video-player'
 
 export default function Watch() {
-  const videoSrc = useSearchParams().get('v')
-  const videoPrefix = 'https://storage.googleapis.com/pr-bucket-vids/'
-
   return (
-    <div>
-      <p>Watch Page</p>
-      <video controls src={videoPrefix + videoSrc} />
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <VideoPlayer />
+    </Suspense>
   )
 }
-
-export const revalidate = 30
