@@ -4,88 +4,93 @@ import ffmpeg from 'fluent-ffmpeg'
 
 const storage = new Storage()
 
-const rawVidsBucketName = 'raw-vids-bucket'
-const processedVidsBucketName = 'pr-vids-bucket'
+const rawVideoBucketName = 'raw-bucket-vids'
+const processedVideoBucketName = 'pr-bucket-vids'
 
-const localRawVidsPath = './raw-vids'
-const localProcessedVidsPath = './p-vids'
+const localRawVideoPath = './raw-vids'
+const localProcessedVideoPath = './pr-vids'
 
 /**
- * Creates the local directories for raw and processed vids
+ * Creates the local directories for raw and processed videos.
  */
 export function setupDirectories() {
-  ensureDirectoryExistence(localRawVidsPath)
-  ensureDirectoryExistence(localProcessedVidsPath)
+  ensureDirectoryExistence(localRawVideoPath)
+  ensureDirectoryExistence(localProcessedVideoPath)
 }
 
 /**
- * @param rawVideoName - The name of the file to convert from {@link localRawVidsPath}
- * @param processedVideoName - The name of the file to conver to {@link localProcessedVidsPath}
- * @returns A promise that resolves when the video has been converted
+ * @param rawVideoName - The name of the file to convert from {@link localRawVideoPath}.
+ * @param processedVideoName - The name of the file to convert to {@link localProcessedVideoPath}.
+ * @returns A promise that resolves when the video has been converted.
  */
 export function convertVideo(rawVideoName: string, processedVideoName: string) {
   return new Promise<void>((resolve, reject) => {
-    ffmpeg(`${localRawVidsPath}/${rawVideoName}`)
-      .outputOption('-vf', 'scale=-1:360')
-      .on('end', () => {
-        console.log('Processing video completed.')
+    ffmpeg(`${localRawVideoPath}/${rawVideoName}`)
+      .outputOptions('-vf', 'scale=-1:360') // 360p
+      .on('end', function () {
+        console.log('Processing finished successfully')
         resolve()
       })
-      .on('error', err => {
-        console.log(`An error occured: ${err.message}`)
+      .on('error', function (err: any) {
+        console.log('An error occurred: ' + err.message)
         reject(err)
       })
-      .save(`${localProcessedVidsPath}/${processedVideoName}`)
+      .save(`${localProcessedVideoPath}/${processedVideoName}`)
   })
 }
 
 /**
  * @param fileName - The name of the file to download from the
- * {@link rawVidsBucketName} bucket into the {@link localRawVidsPath} folder.
+ * {@link rawVideoBucketName} bucket into the {@link localRawVideoPath} folder.
  * @returns A promise that resolves when the file has been downloaded.
  */
 export async function downloadRawVideo(fileName: string) {
   await storage
-    .bucket(rawVidsBucketName)
+    .bucket(rawVideoBucketName)
     .file(fileName)
-    .download({ destination: `${localRawVidsPath}/${fileName}` })
+    .download({
+      destination: `${localRawVideoPath}/${fileName}`
+    })
 
-  console.log(`gs://${rawVidsBucketName}/${fileName} downloaded to ${localRawVidsPath}/${fileName}.`)
+  console.log(`gs://${rawVideoBucketName}/${fileName} downloaded to ${localRawVideoPath}/${fileName}.`)
 }
 
 /**
  * @param fileName - The name of the file to upload from the
- * {@link localProcessedVidsPath} folder into the {@link processedVidsBucketName}.
+ * {@link localProcessedVideoPath} folder into the {@link processedVideoBucketName}.
  * @returns A promise that resolves when the file has been uploaded.
  */
 export async function uploadProcessedVideo(fileName: string) {
-  const bucket = storage.bucket(processedVidsBucketName)
+  const bucket = storage.bucket(processedVideoBucketName)
 
-  await bucket.upload(`${localProcessedVidsPath}/${fileName}`, { destination: fileName })
+  // Upload video to the bucket
+  await storage.bucket(processedVideoBucketName).upload(`${localProcessedVideoPath}/${fileName}`, {
+    destination: fileName
+  })
+  console.log(`${localProcessedVideoPath}/${fileName} uploaded to gs://${processedVideoBucketName}/${fileName}.`)
 
-  console.log(`${localProcessedVidsPath}/${fileName} uploaded to gs://${processedVidsBucketName}/${fileName}.`)
-
+  // Set the video to be publicly readable
   await bucket.file(fileName).makePublic()
 }
 
 /**
  * @param fileName - The name of the file to delete from the
- * {@link localRawVidsPath} folder.
+ * {@link localRawVideoPath} folder.
  * @returns A promise that resolves when the file has been deleted.
  *
  */
 export function deleteRawVideo(fileName: string) {
-  return deleteFile(`${localRawVidsPath}/${fileName}`)
+  return deleteFile(`${localRawVideoPath}/${fileName}`)
 }
 
 /**
  * @param fileName - The name of the file to delete from the
- * {@link localProcessedVidsPath} folder.
+ * {@link localProcessedVideoPath} folder.
  * @returns A promise that resolves when the file has been deleted.
  *
  */
 export function deleteProcessedVideo(fileName: string) {
-  return deleteFile(`${localProcessedVidsPath}/${fileName}`)
+  return deleteFile(`${localProcessedVideoPath}/${fileName}`)
 }
 
 /**
